@@ -27,6 +27,7 @@ class CompositeSdoHProvider(SdoHDataProvider):
     Priority: supplements override primary for the fields they provide.
     - AirNow overrides air_quality_index (if it has real data)
     - FoodAccessCrime overrides grocery_access_score and crime_rate_per_100k
+    - CHAS overrides housing_instability_score (if it has real data, not 40.0 default)
     """
 
     def __init__(
@@ -34,10 +35,12 @@ class CompositeSdoHProvider(SdoHDataProvider):
         primary: SdoHDataProvider,
         supplement: SdoHDataProvider | None = None,
         food_crime: SdoHDataProvider | None = None,
+        chas: SdoHDataProvider | None = None,
     ):
         self._primary = primary
         self._supplement = supplement
         self._food_crime = food_crime
+        self._chas = chas
 
     def fetch_metrics(self, zip_code: str) -> RawSdoHMetrics:
         """Fetch from primary, then override with supplements' non-default values."""
@@ -65,6 +68,16 @@ class CompositeSdoHProvider(SdoHDataProvider):
                 # Override crime rate if it's not the national average (380)
                 if fc_metrics.crime_rate_per_100k != 380.0:
                     updates["crime_rate_per_100k"] = fc_metrics.crime_rate_per_100k
+            except Exception:
+                pass
+
+        # CHAS supplement: override housing instability if it has real data
+        if self._chas is not None:
+            try:
+                chas_metrics = self._chas.fetch_metrics(zip_code)
+                # Override housing instability if it's not the default (40.0)
+                if chas_metrics.housing_instability_score != 40.0:
+                    updates["housing_instability_score"] = chas_metrics.housing_instability_score
             except Exception:
                 pass
 

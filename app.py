@@ -16,6 +16,7 @@ from features.sdoh_profiler.providers.census import CensusACSProvider
 from features.sdoh_profiler.providers.airnow import AirNowProvider
 from features.sdoh_profiler.providers.composite import CompositeSdoHProvider
 from features.sdoh_profiler.providers.food_crime import FoodAccessCrimeProvider
+from features.sdoh_profiler.providers.chas import CHASHousingProvider
 from features.sdoh_profiler.shell import get_sdoh_profile
 from features.risk_scoring.core import compute_risk_profile
 from features.intervention_strategist.providers.mock import MockLLMProvider
@@ -32,10 +33,12 @@ _airnow_key = os.environ.get("AIRNOW_API_KEY", "")
 if _sdoh_provider_mode == "composite" and _census_key:
     _hud_token = os.environ.get("HUD_API_TOKEN", "")
     _food_crime = FoodAccessCrimeProvider(hud_token=_hud_token) if _hud_token else None
+    _chas = CHASHousingProvider(api_token=_hud_token) if _hud_token else None
     _sdoh_provider = CompositeSdoHProvider(
         primary=CensusACSProvider(api_key=_census_key),
         supplement=AirNowProvider(api_key=_airnow_key) if _airnow_key else None,
         food_crime=_food_crime,
+        chas=_chas,
     )
 elif _sdoh_provider_mode == "census" and _census_key:
     _sdoh_provider = CensusACSProvider(api_key=_census_key)
