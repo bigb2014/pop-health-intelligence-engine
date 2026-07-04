@@ -8,3 +8,4 @@ build/
 .hermes/
 .env
 .hud_p**
+data/
