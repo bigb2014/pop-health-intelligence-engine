@@ -6,24 +6,16 @@ services:
     image: pop-health-intelligence-engine:latest
     container_name: pop-health-engine
     ports:
-      # Bind to ALL interfaces so NetBird peers can reach it
       - "0.0.0.0:8501:8501"
+    env_file:
+      - .env
     environment:
       - PYTHONPATH=/app/src
       - STREAMLIT_SERVER_ADDRESS=0.0.0.0
       - STREAMLIT_SERVER_HEADLESS=true
-      # SDOH data provider: mock | census | composite | local_db
       - SDOH_PROVIDER=composite
-      # Census ACS API key (free at https://api.census.gov/data/key_signup.html)
-      - CENSUS_API_KEY=df3964...db39
-      # EPA AirNow API key (free at https://docs.airnowapi.org/airnow/downloads/)
-      - AIRNOW_API_KEY=F8AE58...A54
-      # HUD USPS ZIP Crosswalk API token (free at https://www.huduser.gov/hudapi/public/register)
-      - HUD_API_TOKEN=eyJ0eX...8A
-      # LLM provider: mock | ollama
       - LLM_PROVIDER=ollama
       - OLLAMA_MODEL=qwen2.5:7b
-      # Ollama runs on the host — container reaches it via host.docker.internal
       - OLLAMA_HOST=http://host.docker.internal:11434
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -34,6 +26,3 @@ services:
       timeout: 10s
       start_period: 20s
       retries: 3
-    # If Docker Desktop's default network doesn't expose to NetBird interface,
-    # use host networking instead (uncomment below and remove 'ports' section):
-    # network_mode: host
