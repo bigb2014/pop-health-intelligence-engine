@@ -8,4 +8,4 @@ build/
 .hermes/
 .env
 .hud_p**
-data/
+data/sdoh.db
