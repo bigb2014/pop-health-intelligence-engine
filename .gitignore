@@ -9,3 +9,5 @@ build/
 .env
 .hud_p**
 data/sdoh.db
+data/hud/food-access-research/
+data/ahrq_gov_downloads/
