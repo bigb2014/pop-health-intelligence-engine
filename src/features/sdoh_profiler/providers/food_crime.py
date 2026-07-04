@@ -27,32 +27,14 @@ from typing import Any
 
 from shared.models import RawSdoHMetrics
 from features.sdoh_profiler.base import SdoHDataProvider
+from features.sdoh_profiler.providers.tn_crime_data import TN_COUNTY_CRIME_RATES, ZIP_TO_COUNTY_EXPANDED
 from features.sdoh_profiler.providers.hud import HUDCrosswalkProvider
 
 
-# ── Static TN County Crime Rates (violent crimes per 100k) ────────────────
-# Source: County Health Rankings 2024, violent crime rate per 100k
-# This covers Nashville metro counties. For full national coverage,
-# download the CHR national dataset and ingest via scripts/ingest_crime_data.py
-TN_COUNTY_CRIME_RATES: dict[str, float] = {
-    "47037": 1243.0,   # Davidson County (Nashville)
-    "47021": 612.0,    # Cheatham County
-    "47083": 458.0,    # Dickson County
-    "47119": 534.0,    # Macon County
-    "47147": 780.0,    # Robertson County
-    "47149": 521.0,    # Rutherford County (Murfreesboro)
-    "47165": 389.0,    # Sumner County
-    "47187": 445.0,    # Williamson County (Brentwood/Franklin)
-    "47189": 567.0,    # Wilson County
-    "47043": 892.0,    # Dickson County
-}
-
-# Map Nashville ZIP prefixes to their primary county FIPS
-ZIP_TO_COUNTY: dict[str, str] = {
-    "372": "47037",  # Nashville 37xxx → Davidson County
-    "370": "47037",  # Most 370xx in metro → Davidson
-    "371": "47149",  # 371xx → Rutherford/Sumner (approximate)
-}
+# Use the expanded dataset from tn_crime_data.py
+# (all 95 TN counties, expanded ZIP→county mapping)
+TN_COUNTY_CRIME = TN_COUNTY_CRIME_RATES
+ZIP_TO_COUNTY = ZIP_TO_COUNTY_EXPANDED
 
 NATIONAL_AVG_CRIME = 380.0
 
@@ -137,8 +119,8 @@ class FoodAccessCrimeProvider(SdoHDataProvider):
         """
         prefix = zip_code[:3]
         county_fips = ZIP_TO_COUNTY.get(prefix)
-        if county_fips and county_fips in TN_COUNTY_CRIME_RATES:
-            return TN_COUNTY_CRIME_RATES[county_fips]
+        if county_fips and county_fips in TN_COUNTY_CRIME:
+            return TN_COUNTY_CRIME[county_fips]
         return NATIONAL_AVG_CRIME
 
     def fetch_metrics(self, zip_code: str) -> RawSdoHMetrics:

@@ -17,6 +17,7 @@ from features.sdoh_profiler.providers.airnow import AirNowProvider
 from features.sdoh_profiler.providers.composite import CompositeSdoHProvider
 from features.sdoh_profiler.providers.food_crime import FoodAccessCrimeProvider
 from features.sdoh_profiler.providers.chas import CHASHousingProvider
+from features.sdoh_profiler.historical import SDOHHistoryTracker
 from features.sdoh_profiler.shell import get_sdoh_profile
 from features.risk_scoring.core import compute_risk_profile
 from features.intervention_strategist.providers.mock import MockLLMProvider
@@ -156,6 +157,25 @@ with tab_single:
 
         with st.spinner("Quantifying financial impact..."):
             financial_impact = quantify_value(patient, risk_profile, care_plan)
+
+        # Save SDOH snapshot for historical tracking
+        try:
+            _history_tracker = SDOHHistoryTracker()
+            _history_tracker.snapshot(patient.zip_code, {
+                "overall_risk": sdoh_profile.overall_sdoh_risk,
+                "air_quality_index": _sdoh_provider.fetch_metrics(patient.zip_code).air_quality_index
+                    if _sdoh_provider_mode != "mock" else 50,
+                "grocery_access_score": sdoh_profile.food_desert_risk * 100
+                    if hasattr(sdoh_profile, "food_desert_risk") else 50,
+                "housing_instability_score": sdoh_profile.housing_risk * 100
+                    if hasattr(sdoh_profile, "housing_risk") else 40,
+                "transportation_access_score": sdoh_profile.transportation_risk * 100
+                    if hasattr(sdoh_profile, "transportation_risk") else 50,
+                "crime_rate_per_100k": 380,
+                "education_attainment_pct": 80,
+            }, source=_sdoh_provider_mode)
+        except Exception:
+            pass  # Historical tracking is non-critical
 
         # Risk tier banner
         tier_colors = {

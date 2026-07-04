@@ -8,7 +8,8 @@ from unittest.mock import MagicMock, patch
 from shared.models import RawSdoHMetrics
 from features.sdoh_profiler.base import SdoHDataProvider
 from features.sdoh_profiler.providers.hud import HUDCrosswalkProvider
-from features.sdoh_profiler.providers.food_crime import FoodAccessCrimeProvider, TN_COUNTY_CRIME_RATES
+from features.sdoh_profiler.providers.food_crime import FoodAccessCrimeProvider, TN_COUNTY_CRIME
+from features.sdoh_profiler.providers.tn_crime_data import TN_COUNTY_CRIME_RATES
 from features.sdoh_profiler.providers.composite import CompositeSdoHProvider
 
 
@@ -54,7 +55,7 @@ class TestFoodAccessCrimeProvider:
         """Nashville 372xx ZIPs should return Davidson County crime rate."""
         provider = FoodAccessCrimeProvider(hud_token="")
         metrics = provider.fetch_metrics("37208")
-        assert metrics.crime_rate_per_100k == TN_COUNTY_CRIME_RATES["47037"]
+        assert metrics.crime_rate_per_100k == TN_COUNTY_CRIME["47037"]
         assert metrics.crime_rate_per_100k > 380  # Higher than national avg
 
     def test_crime_rate_for_brentwood_zip(self):
