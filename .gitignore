@@ -6,4 +6,5 @@ __pycache__/
 dist/
 build/
 .hermes/
-.env.hud_p*
+.env
+.hud_p**
