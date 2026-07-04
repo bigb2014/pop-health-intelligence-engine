@@ -18,6 +18,8 @@ services:
       - CENSUS_API_KEY=df3964...db39
       # EPA AirNow API key (free at https://docs.airnowapi.org/airnow/downloads/)
       - AIRNOW_API_KEY=F8AE58...A54
+      # HUD USPS ZIP Crosswalk API token (free at https://www.huduser.gov/hudapi/public/register)
+      - HUD_API_TOKEN=eyJ0eX...8A
       # LLM provider: mock | ollama
       - LLM_PROVIDER=ollama
       - OLLAMA_MODEL=qwen2.5:7b
