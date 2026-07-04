@@ -18,6 +18,7 @@ from features.sdoh_profiler.providers.composite import CompositeSdoHProvider
 from features.sdoh_profiler.shell import get_sdoh_profile
 from features.risk_scoring.core import compute_risk_profile
 from features.intervention_strategist.providers.mock import MockLLMProvider
+from features.intervention_strategist.providers.ollama import OllamaProvider
 from features.intervention_strategist.shell import generate_care_plan
 from features.value_quantifier.core import quantify_value
 
@@ -38,6 +39,18 @@ else:
     _sdoh_provider = MockSdoHProvider()
 
 _sdoh_data_source = "Mock" if _sdoh_provider_mode == "mock" else f"Live ({_sdoh_provider_mode})"
+
+# Select LLM provider based on environment variable
+_llm_provider_mode = os.environ.get("LLM_PROVIDER", "mock")
+_ollama_model = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b")
+_ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+
+if _llm_provider_mode == "ollama":
+    _llm_provider = OllamaProvider(model=_ollama_model, host=_ollama_host)
+    _llm_data_source = f"Ollama ({_ollama_model})"
+else:
+    _llm_provider = MockLLMProvider()
+    _llm_data_source = "Mock LLM"
 
 
 st.set_page_config(
@@ -122,7 +135,7 @@ with tab_single:
             is_adherent=is_adherent,
         )
 
-        llm_provider = MockLLMProvider()
+        llm_provider = _llm_provider
 
         # Pipeline
         with st.spinner("Analyzing SDOH factors..."):
@@ -131,7 +144,7 @@ with tab_single:
         with st.spinner("Computing risk score..."):
             risk_profile = compute_risk_profile(patient, sdoh_profile)
 
-        with st.spinner("Generating care plan (LLM + Critic)..."):
+        with st.spinner(f"Generating care plan via {_llm_data_source}..."):
             care_plan = generate_care_plan(patient, risk_profile, llm_provider)
 
         with st.spinner("Quantifying financial impact..."):
@@ -147,7 +160,7 @@ with tab_single:
             f"### Risk Tier: :{tier_color}[{risk_profile.risk_tier.value.upper()}] "
             f"(Score: {risk_profile.final_risk_score})"
         )
-        st.caption(f"📊 SDOH Data Source: {_sdoh_data_source}")
+        st.caption(f"📊 SDOH Data Source: {_sdoh_data_source} | 🤖 LLM: {_llm_data_source}")
 
         # Four columns for the four features
         col1, col2, col3, col4 = st.columns(4)
@@ -267,7 +280,7 @@ with tab_batch:
 
                     sdoh = get_sdoh_profile(p.zip_code, _sdoh_provider)
                     risk = compute_risk_profile(p, sdoh)
-                    plan = generate_care_plan(p, risk, MockLLMProvider())
+                    plan = generate_care_plan(p, risk, _llm_provider)
                     impact = quantify_value(p, risk, plan)
 
                     results.append({

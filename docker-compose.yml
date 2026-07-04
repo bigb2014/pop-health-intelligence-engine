@@ -18,8 +18,13 @@ services:
       - CENSUS_API_KEY=df3964...db39
       # EPA AirNow API key (free at https://docs.airnowapi.org/airnow/downloads/)
       - AIRNOW_API_KEY=F8AE58...A54
-      # LLM provider: mock | llama
-      - LLM_PROVIDER=mock
+      # LLM provider: mock | ollama
+      - LLM_PROVIDER=ollama
+      - OLLAMA_MODEL=qwen2.5:7b
+      # Ollama runs on the host — container reaches it via host.docker.internal
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"]
