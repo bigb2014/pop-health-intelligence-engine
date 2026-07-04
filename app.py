@@ -11,11 +11,32 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 import streamlit as st
 from shared.models import PatientInput
 from features.sdoh_profiler.providers.mock import MockSdoHProvider
+from features.sdoh_profiler.providers.census import CensusACSProvider
+from features.sdoh_profiler.providers.airnow import AirNowProvider
+from features.sdoh_profiler.providers.composite import CompositeSdoHProvider
 from features.sdoh_profiler.shell import get_sdoh_profile
 from features.risk_scoring.core import compute_risk_profile
 from features.intervention_strategist.providers.mock import MockLLMProvider
 from features.intervention_strategist.shell import generate_care_plan
 from features.value_quantifier.core import quantify_value
+
+
+# Select SDOH provider based on environment variable
+_sdoh_provider_mode = os.environ.get("SDOH_PROVIDER", "mock")
+_census_key = os.environ.get("CENSUS_API_KEY", "")
+_airnow_key = os.environ.get("AIRNOW_API_KEY", "")
+
+if _sdoh_provider_mode == "composite" and _census_key:
+    _sdoh_provider = CompositeSdoHProvider(
+        primary=CensusACSProvider(api_key=_census_key),
+        supplement=AirNowProvider(api_key=_airnow_key) if _airnow_key else None,
+    )
+elif _sdoh_provider_mode == "census" and _census_key:
+    _sdoh_provider = CensusACSProvider(api_key=_census_key)
+else:
+    _sdoh_provider = MockSdoHProvider()
+
+_sdoh_data_source = "Mock" if _sdoh_provider_mode == "mock" else f"Live ({_sdoh_provider_mode})"
 
 
 st.set_page_config(
@@ -74,7 +95,7 @@ if run:
         is_adherent=is_adherent,
     )
 
-    sdoh_provider = MockSdoHProvider()
+    sdoh_provider = _sdoh_provider
     llm_provider = MockLLMProvider()
 
     # Pipeline
@@ -104,6 +125,7 @@ if run:
         f"### Risk Tier: :{tier_color}[{risk_profile.risk_tier.value.upper()}] "
         f"(Score: {risk_profile.final_risk_score})"
     )
+    st.caption(f"📊 SDOH Data Source: {_sdoh_data_source}")
 
     # Four columns for the four features
     col1, col2, col3, col4 = st.columns(4)

@@ -13,11 +13,11 @@ services:
       - STREAMLIT_SERVER_ADDRESS=0.0.0.0
       - STREAMLIT_SERVER_HEADLESS=true
       # SDOH data provider: mock | census | composite | local_db
-      - SDOH_PROVIDER=mock
+      - SDOH_PROVIDER=composite
       # Census ACS API key (free at https://api.census.gov/data/key_signup.html)
-      - CENSUS_API_KEY=
+      - CENSUS_API_KEY=df3964...db39
       # EPA AirNow API key (free at https://docs.airnowapi.org/airnow/downloads/)
-      - AIRNOW_API_KEY=
+      - AIRNOW_API_KEY=F8AE58...A54
       # LLM provider: mock | llama
       - LLM_PROVIDER=mock
     restart: unless-stopped

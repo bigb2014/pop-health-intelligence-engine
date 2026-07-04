@@ -74,6 +74,8 @@ class CensusACSProvider(SdoHDataProvider):
         """Fetch ACS variables for a single ZCTA.
 
         Returns a dict mapping variable code → estimate value.
+        Returns empty dict if the ZCTA is not found, the API errors,
+        or the key is rate-limited (Census returns HTML instead of JSON).
         """
         var_str = ",".join(["NAME"] + ALL_VARS)
         url = (
@@ -83,11 +85,20 @@ class CensusACSProvider(SdoHDataProvider):
         if self._api_key:
             url += f"&key={self._api_key}"
 
-        req = urllib.request.Request(url, headers={"User-Agent": "PopHealthEngine/0.1"})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode())
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "PopHealthEngine/0.1"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                raw = resp.read().decode()
+                if not raw or raw.strip() == "":
+                    return {}
+                # Census returns an HTML "Invalid Key" page when rate-limited
+                if "<html" in raw.lower() or "<title" in raw.lower():
+                    return {}
+                data = json.loads(raw)
+        except Exception:
+            return {}
 
-        if len(data) < 2:
+        if not isinstance(data, list) or len(data) < 2:
             return {}
 
         headers = data[0]
